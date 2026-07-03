@@ -1,4 +1,4 @@
-name: CI/CD workflow for Maven Build and Sonar Code Scan
+name: Build and Deploy train-ticket-reservation
 
 on:
   push:
@@ -11,25 +11,33 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 11
+      - name: ☕ Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: '11'
+          distribution: 'temurin'
+          java-version: '17'
 
-      - name: Build with Maven
-        run: mvn clean install
+      - name: 🔨 Build with Maven
+        run: mvn clean package -DskipTests
 
+      - name: 🗂 Find WAR file
+        run: echo "WAR_FILE=$(ls target/*.war | head -n 1)" >> $GITHUB_ENV
+
+      - name: ⬆ Upload WAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: war-file
+          path: ${{ env.WAR_FILE }}
+
+     
       - name: Configure Maven settings.xml for Nexus
         run: |
           mkdir -p ~/.m2
-          cat > ~/.m2/settings.xml <<EOF
-          <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
-                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
+          cat <<EOF > ~/.m2/settings.xml
+          <settings>
             <servers>
               <server>
                 <id>nexus</id>
@@ -40,8 +48,5 @@ jobs:
           </settings>
           EOF
 
-      - name: Deploy Artifact to Nexus Release Repository
-        run: |
-          mvn clean deploy \
-            -DskipTests \
-            -DaltDeploymentRepository=nexus::default::http://<NEXUS-IP>:8081/repository/maven-releases/
+      - name: Upload Artifact to Nexus
+        run: mvn deploy -DaltDeploymentRepository=nexus::default::${{ secrets.NEXUS_REPO_URL }}
