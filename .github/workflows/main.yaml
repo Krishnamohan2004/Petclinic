@@ -48,5 +48,15 @@ jobs:
           </settings>
           EOF
 
+<<<<<<< HEAD
       - name: Upload Artifact to Nexus
         run: mvn deploy -DaltDeploymentRepository=nexus::default::${{ secrets.NEXUS_REPO_URL }}
+=======
+      - name: Deploy Artifact to Nexus Repository
+        env:
+          NEXUS_URL: ${{ secrets.NEXUS_URL }}
+        run: |
+          mvn clean deploy \
+            -DskipTests \
+            -Dnexus.url=${NEXUS_URL}
+>>>>>>> dcc7dc3 (pom.xml)
