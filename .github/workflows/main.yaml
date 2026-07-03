@@ -52,6 +52,7 @@ jobs:
         env:
           NEXUS_URL: ${{ secrets.NEXUS_URL }}
         run: |
+          NEXUS_URL=${NEXUS_URL:-http://localhost:8081}
           mvn clean deploy \
             -DskipTests \
             -Dnexus.url=${NEXUS_URL}
